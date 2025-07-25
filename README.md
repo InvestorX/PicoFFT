@@ -4,7 +4,6 @@ Real-time FFT spectrum analyzer implementation for Raspberry Pi Pico with LCD di
 
 ![PicoFFT](https://img.shields.io/badge/Platform-Raspberry%20Pi%20Pico-red)
 ![Build](https://img.shields.io/badge/Build-CMake-blue)
-![License](https://img.shields.io/badge/License-MIT-green)
 
 ## 🚀 Features
 
@@ -212,8 +211,19 @@ stdio_init_all();  // Already enabled in main.c
 - Configurable parameters via config_settings.h
 
 ## 📄 License
+### "THE SUSHI-WARE LICENSE"
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+InvestorX wrote this file.
+
+As long as you retain this notice you can do whatever you want
+with this stuff. If we meet some day, and you think this stuff
+is worth it, you can buy me a **sushi 🍣** in return.
+
+(This license is based on ["THE BEER-WARE LICENSE" (Revision 42)].
+ Thanks a lot, Poul-Henning Kamp ;)
+
+​["THE BEER-WARE LICENSE" (Revision 42)]: https://people.freebsd.org/~phk/
+
 
 ## 🤝 Contributing
 
