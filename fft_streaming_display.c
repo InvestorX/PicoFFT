@@ -270,8 +270,6 @@ void fft_streaming_display_draw_axes(void) {
         LCD_SetPointlColor(STREAM_SPECTRUM_X - 1, y, STREAM_COLOR_AXIS);
     }
     
-    // Horizontal axis (frequency) markers - main.cで定義された配列を使用
-    printf("Axis frequency markers (%s scale):\n", USE_LOG_FREQ_SCALE ? "Logarithmic" : "Linear");
     
     for (int i = 0; i < FREQ_MARKERS_COUNT; i++) {
         // main.cで定義された周波数マーカーを使用
@@ -281,8 +279,8 @@ void fft_streaming_display_draw_axes(void) {
         float normalized = fft_streaming_display_freq_to_position(frequency);
         int x = STREAM_SPECTRUM_X + (int)(normalized * STREAM_SPECTRUM_W);
         
-        printf("  %dHz: norm=%.3f, x=%d (scale: %s)\n", 
-                frequency, normalized, x, USE_LOG_FREQ_SCALE ? "Log" : "Linear");
+        // printf("  %dHz: norm=%.3f, x=%d (scale: %s)\n", 
+        //         frequency, normalized, x, USE_LOG_FREQ_SCALE ? "Log" : "Linear");
         
         // Draw frequency marker tick (thicker and longer)
         for (int tick_y = 0; tick_y < 12; tick_y++) {
@@ -354,16 +352,16 @@ void fft_streaming_display_draw_axes(void) {
     const int amp_markers = 8;
     int amplitude_dbm[8] = {20, 10, 0, -20, -40, -60, -80, -100};  // 上から下の順序（正しい）
     
-    printf("Y-axis dBm markers (8 levels - linear): ");
-    for (int i = 0; i < amp_markers; i++) {
-        printf("%ddBm ", amplitude_dbm[i]);
-    }
-    printf("\n");
+    // printf("Y-axis dBm markers (8 levels - linear): ");
+    // for (int i = 0; i < amp_markers; i++) {
+    //     printf("%ddBm ", amplitude_dbm[i]);
+    // }
+    // printf("\n");
     
     // Debug: Show coordinate calculation
-    printf("Coordinate calculation debug (Linear dBm Scale):\n");
-    printf("STREAM_SPECTRUM_Y=%d, STREAM_SPECTRUM_H=%d\n", STREAM_SPECTRUM_Y, STREAM_SPECTRUM_H);
-    printf("AMPLITUDE_RANGE: %d to %d dBm (Linear)\n", AMPLITUDE_RANGE_MIN_DB, AMPLITUDE_RANGE_MAX_DB);
+    // printf("Coordinate calculation debug (Linear dBm Scale):\n");
+    // printf("STREAM_SPECTRUM_Y=%d, STREAM_SPECTRUM_H=%d\n", STREAM_SPECTRUM_Y, STREAM_SPECTRUM_H);
+    // printf("AMPLITUDE_RANGE: %d to %d dBm (Linear)\n", AMPLITUDE_RANGE_MIN_DB, AMPLITUDE_RANGE_MAX_DB);
     
     for (int i = 0; i < amp_markers; i++) {
         // Calculate position (linear scale for dBm) - main.cの範囲を使用
@@ -372,7 +370,7 @@ void fft_streaming_display_draw_axes(void) {
         int y = STREAM_SPECTRUM_Y + STREAM_SPECTRUM_H - (int)(normalized * STREAM_SPECTRUM_H);
         
         // Debug output for coordinate calculation
-        printf("Level %d: %ddBm -> normalized=%.3f -> y=%d\n", i, amplitude_dbm[i], normalized, y);
+        // printf("Level %d: %ddBm -> normalized=%.3f -> y=%d\n", i, amplitude_dbm[i], normalized, y);
         
         // Draw amplitude marker tick (thicker and longer)
         for (int tick_x = 0; tick_x < 12; tick_x++) {
@@ -489,7 +487,20 @@ void fft_streaming_display_update_spectrum(const float* magnitude_db, float samp
     
     // Clear the entire spectrum buffer first
     for (int i = 0; i < STREAM_BUFFER_COLS; i++) {
-        spectrum_buffer[i].x = STREAM_SPECTRUM_X + i;
+        int display_x = STREAM_SPECTRUM_X + i;
+        
+#if ENABLE_FREQUENCY_OFFSET_CORRECTION
+        // Apply frequency offset correction
+        float freq_range = (float)(FREQUENCY_RANGE_MAX - FREQUENCY_RANGE_MIN);
+        float offset_pixels = ((float)FREQUENCY_DISPLAY_OFFSET_HZ / freq_range) * (STREAM_BUFFER_COLS - 1);
+        display_x += (int)offset_pixels;
+        
+        // Clamp to display bounds
+        if (display_x < STREAM_SPECTRUM_X) display_x = STREAM_SPECTRUM_X;
+        if (display_x >= STREAM_SPECTRUM_X + STREAM_BUFFER_COLS) display_x = STREAM_SPECTRUM_X + STREAM_BUFFER_COLS - 1;
+#endif
+        
+        spectrum_buffer[i].x = display_x;
         spectrum_buffer[i].y = STREAM_SPECTRUM_Y + STREAM_SPECTRUM_H; // Bottom line (no signal)
     }
     
@@ -499,7 +510,7 @@ void fft_streaming_display_update_spectrum(const float* magnitude_db, float samp
         float bin_freq = (float)bin * sample_rate / (float)STREAM_FFT_SIZE;
         
         // Skip frequencies outside our display range (100Hz - 50kHz)
-        if (bin_freq < STREAM_FREQ_MIN_HZ || bin_freq > STREAM_FREQ_MAX_HZ) continue;
+        if (bin_freq < FREQUENCY_RANGE_MIN || bin_freq > FREQUENCY_RANGE_MAX) continue;
         
         // Convert frequency to display column using unified scaling function
         int col = fft_streaming_display_freq_to_column(bin_freq);
@@ -534,18 +545,72 @@ void fft_streaming_display_update_spectrum(const float* magnitude_db, float samp
         if (height < 0) height = 0;
         if (height >= STREAM_SPECTRUM_H) height = STREAM_SPECTRUM_H - 1;
         
-        // Store in buffer with correct mapping
-        spectrum_buffer[col].x = STREAM_SPECTRUM_X + col;
+        // Store in buffer with correct mapping and optional frequency offset correction
+        int display_x = STREAM_SPECTRUM_X + col;
+        
+#if ENABLE_FREQUENCY_OFFSET_CORRECTION
+        // Apply frequency offset correction: convert offset from Hz to pixels
+        float freq_range = (float)(FREQUENCY_RANGE_MAX - FREQUENCY_RANGE_MIN);
+        float offset_pixels = ((float)FREQUENCY_DISPLAY_OFFSET_HZ / freq_range) * (STREAM_BUFFER_COLS - 1);
+        display_x += (int)offset_pixels;
+        
+        // Clamp to display bounds
+        if (display_x < STREAM_SPECTRUM_X) display_x = STREAM_SPECTRUM_X;
+        if (display_x >= STREAM_SPECTRUM_X + STREAM_BUFFER_COLS) display_x = STREAM_SPECTRUM_X + STREAM_BUFFER_COLS - 1;
+#endif
+        
+        spectrum_buffer[col].x = display_x;
         spectrum_buffer[col].y = STREAM_SPECTRUM_Y + STREAM_SPECTRUM_H - height;
         
-        // Debug output for 1kHz frequency mapping verification (linear dBm scale)
-        static int debug_counter = 0;
-        if ((bin >= 7 && bin <= 9) && debug_counter % 180 == 0) {  // Bins around 1kHz, every 3 seconds at 60FPS
-            float pos = fft_streaming_display_freq_to_position(bin_freq);
-            printf("Freq mapping: bin %d (%.1fHz) -> col %d, pos %.3f, raw %.1fdBm, smooth %.1fdBm\n", 
-                   bin, bin_freq, col, pos, db_value, smooth_buffer[col]);
+        // Debug: Log 22.5kHz area spectrum buffer values (first few updates only)
+        static int debug_update_count = 0;
+        if (debug_update_count < 3 && col >= 100 && col <= 110) {
+#if ENABLE_FREQUENCY_OFFSET_CORRECTION
+            float freq_range = (float)(FREQUENCY_RANGE_MAX - FREQUENCY_RANGE_MIN);
+            float offset_pixels = ((float)FREQUENCY_DISPLAY_OFFSET_HZ / freq_range) * (STREAM_BUFFER_COLS - 1);
+            int original_x = STREAM_SPECTRUM_X + col;
+            // printf("Spectrum Buffer Debug: col=%d, freq=%.0fHz, x=%d->%d (offset=%.1fpx), y=%d, dB=%.1f\n", 
+            //        col, bin_freq, original_x, spectrum_buffer[col].x, offset_pixels, spectrum_buffer[col].y, smooth_buffer[col]);
+#else
+            // printf("Spectrum Buffer Debug: col=%d, freq=%.0fHz, x=%d, y=%d, dB=%.1f\n", 
+            //        col, bin_freq, spectrum_buffer[col].x, spectrum_buffer[col].y, smooth_buffer[col]);
+#endif
         }
-        debug_counter++;
+        // if (debug_update_count < 3 && col == STREAM_BUFFER_COLS - 1) {
+        //     debug_update_count++;
+            
+        //     // Peak analysis for 22.5kHz area
+        //     printf("\n🎯 Peak Analysis for 22.5kHz Area:\n");
+        //     printf("Col | Freq(Hz) | dB Level | Peak?\n");
+        //     printf("----|----------|----------|------\n");
+            
+        //     for (int peak_col = 100; peak_col <= 110; peak_col++) {
+        //         // Correct frequency calculation for display columns
+        //         float peak_freq = FREQUENCY_RANGE_MIN + ((float)peak_col / (STREAM_BUFFER_COLS - 1)) * (FREQUENCY_RANGE_MAX - FREQUENCY_RANGE_MIN);
+        //         bool is_peak = false;
+                
+        //         // Simple peak detection: higher than neighbors
+        //         if (peak_col > 0 && peak_col < STREAM_BUFFER_COLS - 1) {
+        //             if (smooth_buffer[peak_col] > smooth_buffer[peak_col-1] && 
+        //                 smooth_buffer[peak_col] > smooth_buffer[peak_col+1]) {
+        //                 is_peak = true;
+        //             }
+        //         }
+                
+        //         printf("%3d | %8.0f | %8.1f | %s\n", 
+        //                peak_col, peak_freq, smooth_buffer[peak_col], is_peak ? "YES" : "no");
+        //     }
+        //     printf("\n");
+        // }
+        
+        // // Debug output for 1kHz frequency mapping verification (linear dBm scale)
+        // static int debug_counter = 0;
+        // if ((bin >= 7 && bin <= 9) && debug_counter % 180 == 0) {  // Bins around 1kHz, every 3 seconds at 60FPS
+        //     float pos = fft_streaming_display_freq_to_position(bin_freq);
+        //     printf("Freq mapping: bin %d (%.1fHz) -> col %d, pos %.3f, raw %.1fdBm, smooth %.1fdBm\n", 
+        //            bin, bin_freq, col, pos, db_value, smooth_buffer[col]);
+        // }
+        // debug_counter++;
     }
     
     smooth_init = true;
@@ -568,9 +633,16 @@ void fft_streaming_display_render_buffer(void) {
                       STREAM_COLOR_BG, DRAW_FULL, DOT_PIXEL_1X1);
     
     // Draw vertical lines for each column in buffer
+    // static int debug_render_count = 0;
     for (int col = 0; col < STREAM_BUFFER_COLS; col++) {
         SpectrumPoint point = spectrum_buffer[col];
         if (point.x >= STREAM_SPECTRUM_X && point.x < STREAM_SPECTRUM_X + STREAM_SPECTRUM_W) {
+            // Debug: Log actual rendering positions for 22.5kHz area (first few renders only)
+            // if (debug_render_count < 3 && col >= 100 && col <= 110 && point.y < STREAM_SPECTRUM_Y + STREAM_SPECTRUM_H - 10) {
+            //     printf("Render Debug: col=%d, point.x=%d, point.y=%d (drawing spectrum line)\n", 
+            //            col, point.x, point.y);
+            // }
+            
             // Draw vertical line from bottom to point (current spectrum)
             for (int y = STREAM_SPECTRUM_Y + STREAM_SPECTRUM_H - 1; y >= point.y; y--) {
                 LCD_SetPointlColor(point.x, y, STREAM_COLOR_SPECTRUM);
@@ -597,6 +669,11 @@ void fft_streaming_display_render_buffer(void) {
             }
         }
     }
+    
+    // // Increment debug render count after first render cycle completes
+    // if (debug_render_count < 3) {
+    //     debug_render_count++;
+    // }
     
     // Redraw axis lines on top of spectrum
     fft_streaming_display_draw_axes();

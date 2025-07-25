@@ -128,7 +128,11 @@ static void dma_handler(void) {
 
 /**
  * Cooley-Tukey FFT algorithm (radix-2)
+ * NOTE: This custom FFT implementation is currently not used.
+ * The project uses kiss_fft library instead for FFT processing.
+ * Keeping this code commented for reference and potential future use.
  */
+/*
 void fft_compute(complex_t* data, int n) {
     // Bit-reversal permutation
     int j = 0;
@@ -173,10 +177,15 @@ void fft_compute(complex_t* data, int n) {
         }
     }
 }
+*/
 
 /**
  * Process ADC data and compute FFT
+ * NOTE: This function uses custom FFT implementation which is currently not used.
+ * The project uses kiss_fft library instead for FFT processing.
+ * Keeping this code commented for reference and potential future use.
  */
+/*
 void fft_process_data(void) {
     if (!g_fft_analyzer.data_ready) {
         return;
@@ -280,6 +289,7 @@ void fft_process_data(void) {
     
     g_fft_analyzer.data_ready = false;
 }
+*/
 
 /**
  * Convert FFT bin to frequency
@@ -290,7 +300,10 @@ float fft_bin_to_frequency(int bin) {
 
 /**
  * Convert frequency to display X coordinate
+ * NOTE: This function is part of the unused custom FFT implementation.
+ * Keeping this code commented for reference and potential future use.
  */
+/*
 int fft_frequency_to_display_x(float freq) {
     if (freq < MIN_FREQ) freq = MIN_FREQ;
     if (freq > MAX_FREQ) freq = MAX_FREQ;
@@ -303,12 +316,17 @@ int fft_frequency_to_display_x(float freq) {
     float normalized = (log_freq - log_min) / (log_max - log_min);
     return SPECTRUM_X_OFFSET + (int)(normalized * SPECTRUM_WIDTH);
 }
+*/
 
 /**
  * Convert magnitude to display Y coordinate
+ * NOTE: This function is part of the unused custom FFT implementation.
+ * Keeping this code commented for reference and potential future use.
  */
+/*
 int fft_magnitude_to_display_y(float magnitude) {
     // Magnitude is already normalized (0-255)
     float normalized = magnitude / 255.0;
     return SPECTRUM_Y_OFFSET + SPECTRUM_HEIGHT - (int)(normalized * SPECTRUM_HEIGHT);
 }
+*/

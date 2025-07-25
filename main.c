@@ -12,7 +12,14 @@
 #include "DEV_Config.h"
 #include "LCD_Driver.h"
 #include "fft_streaming_display.h"
+#include "fft_realtime_unified.h"  // 新しい統合システム
 #include "main.h"   //Examples
+
+// ========================================
+// 🔧 システム選択設定
+// ========================================
+// 0 = 既存システム(lib/lcd_test.c), 1 = 新統合システム(adc_sampling.c + fft_realtime_unified.c)
+#define USE_UNIFIED_SYSTEM 1
 
 // ========================================
 // 🔧 グローバル変数定義 - config_settings.hの設定を実体化
@@ -58,11 +65,26 @@ int main() {
             ADC_INPUT_IMPEDANCE/1000, SIGNAL_SOURCE_IMPEDANCE, IMPEDANCE_CORRECTION_FACTOR);
     printf("Peak Hold: %.1f seconds\n", PEAK_HOLD_DURATION_MS/1000.0);
     printf("Display: Green=Current Spectrum, Cyan=Peak Hold\n");
-    printf("Starting FFT analysis with centralized configuration...\n");
     
-    // リアルタイムFFT解析開始 - メイン処理ループ
-    // この関数は無限ループで設定可能FPSでのスペクトラム表示を実行
+    // システム選択に基づいてFFT解析開始
+    #if USE_UNIFIED_SYSTEM
+    printf("Starting UNIFIED FFT analysis with configurable ADC sampling...\n");
+    printf("ADC Sampling Mode: %s\n", ADC_DMA_ENABLED ? "DMA" : "Manual");
+    
+    // 統合システムの初期化と実行
+    if (fft_realtime_unified_init()) {
+        fft_realtime_unified_run();
+    } else {
+        printf("ERROR: Failed to initialize unified system!\n");
+        return -1;
+    }
+    #else
+    printf("Starting LEGACY FFT analysis with manual ADC sampling...\n");
+    printf("ADC Sampling Mode: Manual (adc_read + sleep_us)\n");
+    
+    // 既存システムの実行
     fft_realtime_analysis();
+    #endif
     
     return 0;
 }

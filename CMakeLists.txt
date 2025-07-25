@@ -41,6 +41,8 @@ add_executable(PicoFFT
 main.c
 lib/lcd_test.c
 fft_streaming_display.c
+adc_sampling.c
+fft_realtime_unified.c
 )
 
 # Pico 2W specific optimizations for high-performance FFT

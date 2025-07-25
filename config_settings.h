@@ -71,11 +71,27 @@
 // カイザー・ベッセル窓パラメータ
 #define KAISER_BESSEL_BETA 8.5f                     // カイザー・ベッセル窓のβパラメータ（高精度）
 
+// ** ADCサンプリング設定 **
+#define ADC_DMA_ENABLED 1                           // 0=手動サンプリング, 1=DMAサンプリング
+#define ADC_BUFFER_COUNT 2                          // ダブルバッファリング用バッファ数
+#define ADC_DMA_PRIORITY 0                          // DMA割り込み優先度 (0=最高)
+#define ADC_DMA_CHANNEL_AUTO -1                     // -1=自動選択, 0-11=手動指定
+
+// ** DMAサンプリング高度設定 **
+#define ADC_DMA_TRANSFER_SIZE DMA_SIZE_16           // DMA転送サイズ (16bit ADC)
+#define ADC_DMA_RING_BUFFER_MODE 1                  // 1=リングバッファ, 0=ワンショット
+#define ADC_DMA_ERROR_RECOVERY 1                    // 1=エラー自動回復, 0=手動回復
+#define ADC_DMA_OVERRUN_DETECTION 1                 // 1=オーバーラン検出有効, 0=無効
+
 // ** 表示設定 **
 #define FREQUENCY_RANGE_MIN 1000                    // 最低周波数（1kHz）
 #define FREQUENCY_RANGE_MAX 50000                   // 最高周波数（50kHz）
 #define AMPLITUDE_RANGE_MIN_DB -100                 // 最小振幅（dB）
 #define AMPLITUDE_RANGE_MAX_DB 20                   // 最大振幅（dB）
+
+// ** 表示座標補正設定 **
+#define FREQUENCY_DISPLAY_OFFSET_HZ -2500           // 周波数表示オフセット（Hzで指定）- 負値で左にシフト ADC_DMA_ENABLEDを手動にするときだけ、オフセット入れる
+#define ENABLE_FREQUENCY_OFFSET_CORRECTION 0        // 1=オフセット補正有効, 0=無効
 
 // ** 周波数マーカー設定 **
 // 1kHz, 5kHz, 10kHz, 15kHz, 20kHz, 25kHz, 30kHz, 35kHz, 40kHz, 45kHz, 50kHz (5kHz刻み)
