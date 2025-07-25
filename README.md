@@ -4,7 +4,7 @@ Real-time FFT spectrum analyzer implementation for Raspberry Pi Pico with LCD di
 
 ![PicoFFT](https://img.shields.io/badge/Platform-Raspberry%20Pi%20Pico-red)
 ![Build](https://img.shields.io/badge/Build-CMake-blue)
-[![SUSHI-WARE LICENSE](https://img.shields.io/badge/license-SUSHI--WARE%F0%9F%8D%A3-blue.svg)]
+![SUSHI-WARE LICENSE](https://img.shields.io/badge/license-SUSHI--WARE%F0%9F%8D%A3-blue.svg)
 
 ## 🚀 Features
 
